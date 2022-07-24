@@ -1,8 +1,9 @@
 ﻿using GenesisSchoolTask.Models;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.AspNetCore.Mvc;
+using MimeKit;
 using System.ComponentModel.DataAnnotations;
-using System.Net;
-using System.Net.Mail;
 
 namespace GenesisSchoolTask.Controllers
 {
@@ -12,7 +13,7 @@ namespace GenesisSchoolTask.Controllers
     {
         private readonly string pathToFile = "emails.txt";
 
-        [HttpGet]
+        [HttpGet("rate")]
         public async Task<ActionResult<string>> GetRate()
         {
             using var client = new HttpClient();
@@ -70,34 +71,57 @@ namespace GenesisSchoolTask.Controllers
             return Ok();
         }
 
-        [HttpPost]
-        public async Task<ActionResult> SendEmails()
+        [HttpPost("sendRate")]
+        public async Task<ActionResult> SendEmails() // We could use HangFire
         {
-            var from = new MailAddress("rategenesis@gmail.com", "GenesisSchool");
             string? line;
-            SmtpClient smtpClient =  new SmtpClient("smtp.office365.com", 25)
-            {
-                Credentials = new NetworkCredential("rategenesis@gmail.com", "notme141421"),
-                EnableSsl = true
-            };
 
-            using (var reader = new StreamReader(pathToFile))
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("GenesisSchool", "rategenesis@gmail.com"));
+            var bodyBuilder = new BodyBuilder();
+
+            string UAH = await GetRateInUAH();
+
+            using (var client = new SmtpClient())
             {
-                while ((line = await reader.ReadLineAsync()) != null)
+                var secureSocketOptions = SecureSocketOptions.None;
+                client.Connect("localhost", 25, secureSocketOptions);
+
+                using (var reader = new StreamReader(pathToFile))
                 {
-                    var to = new MailAddress(line);
-                    MailMessage m = new MailMessage(from, to);
-                    var msg = new MailMessage(from, to)
+                    while ((line = await reader.ReadLineAsync()) != null)
                     {
-                        Subject = "BTC-UAH rate",
-                        Body = GetRate().Result.Value?.ToString(),
-                        IsBodyHtml = false
-                    };
-                    smtpClient.Send(m);
+                        emailMessage.To.Add(new MailboxAddress("To", line));
+                        emailMessage.Subject = "BTC-UAH rate";
+                        bodyBuilder.HtmlBody = String.IsNullOrEmpty(UAH) ? UAH : "Unable to send current BTC in UAH rate";
+                        emailMessage.Body = bodyBuilder.ToMessageBody();
+                        await client.SendAsync(emailMessage);
+                    }
                 }
+
+                client.Disconnect(true);
             }
 
             return Ok();
+        }
+
+        private async Task<string> GetRateInUAH()
+        {
+            using var client = new HttpClient();
+
+            var content = await client.GetFromJsonAsync<RateDto>("https://www.kucoin.com/_api/currency/v2/prices?base=UAH");
+
+            if (content == null)
+            {
+                return string.Empty;
+            }
+
+            if (!content.data.TryGetValue("BTC", out string? UAH))
+            {
+                return string.Empty;
+            }
+
+            return UAH;
         }
     }
 }
