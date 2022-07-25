@@ -1,8 +1,5 @@
-﻿using GenesisSchoolTask.Models;
-using MailKit.Net.Smtp;
-using MailKit.Security;
+﻿using GenesisSchoolTask.Services;
 using Microsoft.AspNetCore.Mvc;
-using MimeKit;
 using System.ComponentModel.DataAnnotations;
 
 namespace GenesisSchoolTask.Controllers
@@ -11,59 +8,51 @@ namespace GenesisSchoolTask.Controllers
     [Route("api/rate")]
     public class BTC_UAHRateContorller : ControllerBase
     {
+        private readonly string connection = "https://www.kucoin.com/_api/currency/v2/prices?base=UAH";
         private readonly string pathToFile = "emails.txt";
+        private readonly IBTCService _BTCService;
+
+        public BTC_UAHRateContorller(IBTCService bTCService)
+        {
+            _BTCService = bTCService ?? throw new ArgumentNullException(nameof(bTCService));
+        }
 
         [HttpGet("rate")]
         public async Task<ActionResult<string>> GetRate()
         {
             using var client = new HttpClient();
 
-            var content = await client.GetFromJsonAsync<RateDto>("https://www.kucoin.com/_api/currency/v2/prices?base=UAH");
+            var content = await _BTCService.GetRate(connection);
 
             if (content == null)
             {
                 return NotFound();
             }
 
-            if (!content.data.TryGetValue("BTC", out string? UAH))
-            {
-                return NotFound();
-            }
-            
+            content.data.TryGetValue("BTC", out string? UAH);
+
             return Ok(UAH);
         }
 
         [HttpPost("{email}")]
         public async Task<ActionResult> SignEmailUp([Required] [EmailAddress] string? email)
         {
+            if (email == null)
+            {
+                return BadRequest();
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
-           
-            string? line;
-            bool check = false;
 
-            using (var reader = new StreamReader(pathToFile))
+            if (!System.IO.File.Exists(pathToFile))
             {
-                while ((line = await reader.ReadLineAsync()) != null)
-                {
-                    if (line == email)
-                    {
-                        check = true;
-                        break;
-                    }
-                }
+                return NotFound();
             }
 
-            if (line == null || !check)
-            {
-                using (var writer = new StreamWriter(pathToFile, true))
-                {
-                    await writer.WriteLineAsync(email);
-                }
-            }
-            else
+            if (! await _BTCService.SignEmailUp(pathToFile, email))
             {
                 return BadRequest();
             }
@@ -74,54 +63,18 @@ namespace GenesisSchoolTask.Controllers
         [HttpPost("sendRate")]
         public async Task<ActionResult> SendEmails() // We could use HangFire
         {
-            string? line;
-
-            var emailMessage = new MimeMessage();
-            emailMessage.From.Add(new MailboxAddress("GenesisSchool", "rategenesis@gmail.com"));
-            var bodyBuilder = new BodyBuilder();
-
-            string UAH = await GetRateInUAH();
-
-            using (var client = new SmtpClient())
-            {
-                var secureSocketOptions = SecureSocketOptions.None;
-                client.Connect("localhost", 25, secureSocketOptions);
-
-                using (var reader = new StreamReader(pathToFile))
-                {
-                    while ((line = await reader.ReadLineAsync()) != null)
-                    {
-                        emailMessage.To.Add(new MailboxAddress("To", line));
-                        emailMessage.Subject = "BTC-UAH rate";
-                        bodyBuilder.HtmlBody = String.IsNullOrEmpty(UAH) ? UAH : "Unable to send current BTC in UAH rate";
-                        emailMessage.Body = bodyBuilder.ToMessageBody();
-                        await client.SendAsync(emailMessage);
-                    }
-                }
-
-                client.Disconnect(true);
-            }
-
-            return Ok();
-        }
-
-        private async Task<string> GetRateInUAH()
-        {
-            using var client = new HttpClient();
-
-            var content = await client.GetFromJsonAsync<RateDto>("https://www.kucoin.com/_api/currency/v2/prices?base=UAH");
+            var content = await _BTCService.GetRate(connection);
 
             if (content == null)
             {
-                return string.Empty;
+                return NotFound();
             }
 
-            if (!content.data.TryGetValue("BTC", out string? UAH))
-            {
-                return string.Empty;
-            }
+            content.data.TryGetValue("BTC", out string? currency);
 
-            return UAH;
+            _BTCService.SendEmails(pathToFile, connection, currency);
+
+            return Ok();
         }
     }
 }
