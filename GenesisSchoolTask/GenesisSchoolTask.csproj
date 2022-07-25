@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>8753dc7f-63e3-4499-9ddd-9d17b0520a4d</UserSecretsId>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <DocumentationFile>GenesisSchoolTask.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,13 +1,14 @@
 ﻿namespace GenesisSchoolTask.Models
 {
+    /// <summary>
+    /// Class to work with dictionary of cryptocurrency and it`s rate 
+    /// </summary>
     public class RateDto
     {
-        public bool success { get; set; }
-        public string code { get; set; } = string.Empty;
-        public string msg { get; set; } = string.Empty;
-        public bool retry { get; set; }
-
-        public Dictionary<string, string> data { get; set; }
+        /// <summary>
+        /// Dictionary of cryptocurrency and it`s rate
+        /// </summary>
+        public Dictionary<string, string> data { get; set; } = new Dictionary<string, string>();
     }
 }
 
