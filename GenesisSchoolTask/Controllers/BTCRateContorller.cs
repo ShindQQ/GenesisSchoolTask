@@ -9,20 +9,21 @@ namespace GenesisSchoolTask.Controllers
     /// </summary>
     [ApiController]
     [Route("api/rate")]
-    public class BTC_UAHRateContorller : ControllerBase
+    public class BTCRateContorller : ControllerBase
     {
-        private readonly string connection = "https://www.kucoin.com/_api/currency/v2/prices?base=UAH";
-        private readonly string pathToFile = "emails.txt";
+        private readonly IConfiguration _configuration;
         private readonly IBTCService _BTCService;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="bTCService">Interface which we are implementing using dependency injection</param>
+        /// <param name="configuration">Receiving configuration to use appsettings.json</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public BTC_UAHRateContorller(IBTCService bTCService)
+        public BTCRateContorller(IBTCService bTCService, IConfiguration configuration)
         {
             _BTCService = bTCService ?? throw new ArgumentNullException(nameof(bTCService));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -38,7 +39,7 @@ namespace GenesisSchoolTask.Controllers
         {
             using var client = new HttpClient();
 
-            var content = await _BTCService.GetRate(connection);
+            var content = await _BTCService.GetRate(_configuration.GetSection("ConnectionString").Value);
 
             if (content == null)
             {
@@ -56,30 +57,25 @@ namespace GenesisSchoolTask.Controllers
         /// <param name="email">Receiving email to sign it up</param>
         /// <returns>An ActionResult</returns>
         /// <response code="200">Nothing to return, status code 200</response>
-        /// <response code="400">Returns status code 400 if email is null or it isn`t valid or when it was enable to sign it up</response>
+        /// <response code="400">Returns status code 400 if it isn`t valid or when it was enable to sign it up</response>
         /// <response code="404">Returns status code 404 if there was no file to add in</response>
         [HttpPost("{email}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> SignEmailUp([Required] [EmailAddress] string? email)
+        public async Task<ActionResult> SignEmailUp([Required] [EmailAddress] string email)
         {
-            if (email == null)
-            {
-                return BadRequest();
-            }
-
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            if (!System.IO.File.Exists(pathToFile))
+            if (!System.IO.File.Exists(_configuration.GetSection("PathToFile").Value))
             {
                 return NotFound();
             }
 
-            if (! await _BTCService.SignEmailUp(pathToFile, email))
+            if (! await _BTCService.SignEmailUp(_configuration.GetSection("PathToFile").Value, email))
             {
                 return BadRequest();
             }
@@ -98,7 +94,7 @@ namespace GenesisSchoolTask.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> SendEmails() // We could use HangFire
         {
-            var content = await _BTCService.GetRate(connection);
+            var content = await _BTCService.GetRate(_configuration.GetSection("ConnectionString").Value);
 
             if (content == null)
             {
@@ -112,7 +108,7 @@ namespace GenesisSchoolTask.Controllers
                 return NotFound();
             }
 
-            _BTCService.SendEmails(pathToFile, connection, currency);
+            _BTCService.SendEmails(_configuration.GetSection("PathToFile").Value, _configuration.GetSection("ConnectionString").Value, currency);
 
             return Ok();
         }
