@@ -4,5 +4,116 @@
         <name>GenesisSchoolTask</name>
     </assembly>
     <members>
+        <member name="T:GenesisSchoolTask.Controllers.BTCRateContorller">
+            <summary>
+            Controller to work with API
+            </summary>
+        </member>
+        <member name="M:GenesisSchoolTask.Controllers.BTCRateContorller.#ctor(GenesisSchoolTask.Services.IBTCService,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="bTCService">Interface which we are implementing using dependency injection</param>
+            <param name="configuration">Receiving configuration to use appsettings.json</param>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
+        <member name="M:GenesisSchoolTask.Controllers.BTCRateContorller.GetRate">
+            <summary>
+            Getting rate of selected cryptocurrency
+            </summary>
+            <returns>An ActionResult of string</returns>
+            <response code="200">Returns the requested currency</response>
+            <response code="404">Returns status code 404 if there was no rate for such request</response>
+        </member>
+        <member name="M:GenesisSchoolTask.Controllers.BTCRateContorller.SignEmailUp(System.String)">
+            <summary>
+            Signing email up on notification
+            </summary>
+            <param name="email">Receiving email to sign it up</param>
+            <returns>An ActionResult</returns>
+            <response code="200">Nothing to return, status code 200</response>
+            <response code="400">Returns status code 400 if it isn`t valid or when it was enable to sign it up</response>
+            <response code="404">Returns status code 404 if there was no file to add in</response>
+        </member>
+        <member name="M:GenesisSchoolTask.Controllers.BTCRateContorller.SendEmails">
+            <summary>
+            Sending email on signed emails
+            </summary>
+            <returns></returns>
+            <response code="200">Nothing to return, status code 200</response>
+            <response code="404">Returns status code 404 if there was no data in request or if it was unable to find currency</response>
+        </member>
+        <member name="T:GenesisSchoolTask.Models.RateDto">
+            <summary>
+            Class to work with dictionary of cryptocurrency and it`s rate 
+            </summary>
+        </member>
+        <member name="P:GenesisSchoolTask.Models.RateDto.data">
+            <summary>
+            Dictionary of cryptocurrency and it`s rate
+            </summary>
+        </member>
+        <member name="T:GenesisSchoolTask.Services.BTCService">
+            <summary>
+            Service for getting current btc rate in different currencies
+            </summary>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.BTCService.#ctor(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="configuration">Receiving configuration to use appsettings.json</param>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.BTCService.GetRate(System.String)">
+            <summary>
+            Receiving rate of btc
+            </summary>
+            <param name="connection">String with params of btc and currency to receive</param>
+            <returns>RateDto which has dictionary with cryptocurrency infos</returns>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.BTCService.SignEmailUp(System.String,System.String)">
+            <summary>
+            Signing email on notification of rate
+            </summary>
+            <param name="pathToFile">Path to file with users signed on notification</param>
+            <param name="email">Email which we will add on notification</param>
+            <returns>True if everything is ok, and false if we had such email if our file</returns>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.BTCService.SendEmails(System.String,System.String,System.String)">
+            <summary>
+            Sending emails to all users
+            </summary>
+            <param name="pathToFile">Path to file with users signed on notification</param>
+            <param name="connection">API from which we are receiving cryptocurrency rate</param>
+            <param name="currency">Current rate of needed currency</param>
+        </member>
+        <member name="T:GenesisSchoolTask.Services.IBTCService">
+            <summary>
+            Interface for implementing to work with API
+            </summary>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.IBTCService.GetRate(System.String)">
+            <summary>
+            Receiving rate of btc
+            </summary>
+            <param name="connection">String with params of btc and currency to receive</param>
+            <returns>RateDto which has dictionary with cryptocurrency infos</returns>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.IBTCService.SignEmailUp(System.String,System.String)">
+            <summary>
+            Signing email on notification of rate
+            </summary>
+            <param name="pathToFile">Path to file with users signed on notification</param>
+            <param name="email">Email which we will add on notification</param>
+            <returns>True if everything is ok, and false if we had such email if our file</returns>
+        </member>
+        <member name="M:GenesisSchoolTask.Services.IBTCService.SendEmails(System.String,System.String,System.String)">
+            <summary>
+            Sending emails to all users
+            </summary>
+            <param name="pathToFile">Path to file with users signed on notification</param>
+            <param name="connection">API from which we are receiving cryptocurrency rate</param>
+            <param name="currency">Current rate of needed currency</param>
+        </member>
     </members>
 </doc>
