@@ -41,7 +41,7 @@
             </summary>
             <returns></returns>
             <response code="200">Nothing to return, status code 200</response>
-            <response code="404">Returns status code 404 if there was no data in request or if it was unable to find currency</response>
+            <response code="404">Returns status code 404 if there was no data in request or if it was unable to find currency, or fail with finding currency name</response>
         </member>
         <member name="T:GenesisSchoolTask.Models.RateDto">
             <summary>
@@ -64,56 +64,50 @@
             </summary>
             <param name="configuration">Receiving configuration to use appsettings.json</param>
         </member>
-        <member name="M:GenesisSchoolTask.Services.BTCService.GetRate(System.String)">
+        <member name="M:GenesisSchoolTask.Services.BTCService.GetRate">
             <summary>
             Receiving rate of btc
             </summary>
-            <param name="connection">String with params of btc and currency to receive</param>
             <returns>RateDto which has dictionary with cryptocurrency infos</returns>
         </member>
-        <member name="M:GenesisSchoolTask.Services.BTCService.SignEmailUp(System.String,System.String)">
+        <member name="M:GenesisSchoolTask.Services.BTCService.SignEmailUp(System.String)">
             <summary>
             Signing email on notification of rate
             </summary>
-            <param name="pathToFile">Path to file with users signed on notification</param>
             <param name="email">Email which we will add on notification</param>
             <returns>True if everything is ok, and false if we had such email if our file</returns>
         </member>
-        <member name="M:GenesisSchoolTask.Services.BTCService.SendEmails(System.String,System.String,System.String)">
+        <member name="M:GenesisSchoolTask.Services.BTCService.SendEmails(System.String,System.String)">
             <summary>
             Sending emails to all users
             </summary>
-            <param name="pathToFile">Path to file with users signed on notification</param>
-            <param name="connection">API from which we are receiving cryptocurrency rate</param>
             <param name="currency">Current rate of needed currency</param>
+            <param name="currencyName">Current name of needed currency</param>
         </member>
         <member name="T:GenesisSchoolTask.Services.IBTCService">
             <summary>
             Interface for implementing to work with API
             </summary>
         </member>
-        <member name="M:GenesisSchoolTask.Services.IBTCService.GetRate(System.String)">
+        <member name="M:GenesisSchoolTask.Services.IBTCService.GetRate">
             <summary>
             Receiving rate of btc
             </summary>
-            <param name="connection">String with params of btc and currency to receive</param>
             <returns>RateDto which has dictionary with cryptocurrency infos</returns>
         </member>
-        <member name="M:GenesisSchoolTask.Services.IBTCService.SignEmailUp(System.String,System.String)">
+        <member name="M:GenesisSchoolTask.Services.IBTCService.SignEmailUp(System.String)">
             <summary>
             Signing email on notification of rate
             </summary>
-            <param name="pathToFile">Path to file with users signed on notification</param>
             <param name="email">Email which we will add on notification</param>
             <returns>True if everything is ok, and false if we had such email if our file</returns>
         </member>
-        <member name="M:GenesisSchoolTask.Services.IBTCService.SendEmails(System.String,System.String,System.String)">
+        <member name="M:GenesisSchoolTask.Services.IBTCService.SendEmails(System.String,System.String)">
             <summary>
             Sending emails to all users
             </summary>
-            <param name="pathToFile">Path to file with users signed on notification</param>
-            <param name="connection">API from which we are receiving cryptocurrency rate</param>
             <param name="currency">Current rate of needed currency</param>
+            <param name="currencyName">Current name of needed currency</param>
         </member>
     </members>
 </doc>

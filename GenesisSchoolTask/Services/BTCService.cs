@@ -11,6 +11,8 @@ namespace GenesisSchoolTask.Services
     public class BTCService : IBTCService
     {
         private readonly IConfiguration _configuration;
+        private readonly string _pathToFile;
+        private readonly string _connection;
 
         /// <summary>
         /// Constructor
@@ -19,18 +21,19 @@ namespace GenesisSchoolTask.Services
         public BTCService(IConfiguration configuration)
         {
             _configuration = configuration;
+            _pathToFile = _configuration.GetSection("PathToFile").Value;
+            _connection = _configuration.GetSection("ConnectionString").Value;
         }
 
         /// <summary>
         /// Receiving rate of btc
         /// </summary>
-        /// <param name="connection">String with params of btc and currency to receive</param>
         /// <returns>RateDto which has dictionary with cryptocurrency infos</returns>
-        public async Task<RateDto?> GetRate(string connection)
+        public async Task<RateDto?> GetRate()
         {
             using var client = new HttpClient();
 
-            var content = await client.GetFromJsonAsync<RateDto>(connection);
+            var content = await client.GetFromJsonAsync<RateDto>(_connection);
 
             if (content == null)
             {
@@ -48,15 +51,14 @@ namespace GenesisSchoolTask.Services
         /// <summary>
         /// Signing email on notification of rate
         /// </summary>
-        /// <param name="pathToFile">Path to file with users signed on notification</param>
         /// <param name="email">Email which we will add on notification</param>
         /// <returns>True if everything is ok, and false if we had such email if our file</returns>
-        public async Task<bool> SignEmailUp(string pathToFile, string email)
+        public async Task<bool> SignEmailUp(string email)
         {
             string? line;
             bool check = false;
 
-            using (var reader = new StreamReader(pathToFile))
+            using (var reader = new StreamReader(_pathToFile))
             {
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
@@ -70,7 +72,7 @@ namespace GenesisSchoolTask.Services
 
             if (line == null || !check)
             {
-                using (var writer = new StreamWriter(pathToFile, true))
+                using (var writer = new StreamWriter(_pathToFile, true))
                 {
                     await writer.WriteLineAsync(email);
                 }
@@ -86,10 +88,9 @@ namespace GenesisSchoolTask.Services
         /// <summary>
         /// Sending emails to all users
         /// </summary>
-        /// <param name="pathToFile">Path to file with users signed on notification</param>
-        /// <param name="connection">API from which we are receiving cryptocurrency rate</param>
         /// <param name="currency">Current rate of needed currency</param>
-        public async void SendEmails(string pathToFile, string connection, string currency)
+        /// <param name="currencyName">Current name of needed currency</param>
+        public async void SendEmails(string currency, string currencyName)
         {
             string? line;
             var emailMessage = new MimeMessage();
@@ -101,13 +102,13 @@ namespace GenesisSchoolTask.Services
                 client.Connect(_configuration.GetSection("EmailHost").Value, 587, SecureSocketOptions.StartTls);
                 client.Authenticate(_configuration.GetSection("EmailUserName").Value, _configuration.GetSection("EmailPassword").Value);
 
-                using (var reader = new StreamReader(pathToFile))
+                using (var reader = new StreamReader(_pathToFile))
                 {
                     while ((line = await reader.ReadLineAsync()) != null)
                     {
                         emailMessage.To.Add(new MailboxAddress("To", line));
-                        emailMessage.Subject = "BTC-UAH rate";
-                        bodyBuilder.HtmlBody = !String.IsNullOrEmpty(currency) ? $"1 BTC costs: {currency} {connection.Substring(connection.Length - 3)}" : $"Unable to send current BTC in {connection.Substring(connection.Length - 3)} rate";
+                        emailMessage.Subject = $"BTC-{currencyName} rate";
+                        bodyBuilder.HtmlBody = !String.IsNullOrEmpty(currency) ? $"1 BTC costs: {currency} {currencyName}" : $"Unable to send current BTC in {currencyName} rate";
                         emailMessage.Body = bodyBuilder.ToMessageBody();
                     }
 

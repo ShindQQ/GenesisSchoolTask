@@ -39,7 +39,7 @@ namespace GenesisSchoolTask.Controllers
         {
             using var client = new HttpClient();
 
-            var content = await _BTCService.GetRate(_configuration.GetSection("ConnectionString").Value);
+            var content = await _BTCService.GetRate();
 
             if (content == null)
             {
@@ -75,7 +75,7 @@ namespace GenesisSchoolTask.Controllers
                 return NotFound();
             }
 
-            if (! await _BTCService.SignEmailUp(_configuration.GetSection("PathToFile").Value, email))
+            if (! await _BTCService.SignEmailUp(email))
             {
                 return BadRequest();
             }
@@ -88,15 +88,24 @@ namespace GenesisSchoolTask.Controllers
         /// </summary>
         /// <returns></returns>
         /// <response code="200">Nothing to return, status code 200</response>
-        /// <response code="404">Returns status code 404 if there was no data in request or if it was unable to find currency</response>
+        /// <response code="404">Returns status code 404 if there was no data in request or if it was unable to find currency, or fail with finding currency name</response>
         [HttpPost("sendRate")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> SendEmails() // We could use HangFire
         {
-            var content = await _BTCService.GetRate(_configuration.GetSection("ConnectionString").Value);
+            var content = await _BTCService.GetRate();
 
             if (content == null)
+            {
+                return NotFound();
+            }
+
+            var url = new Uri(_configuration.GetSection("ConnectionString").Value);
+
+            string? currencyName = System.Web.HttpUtility.ParseQueryString(url.Query)["base"];
+
+            if (currencyName == null)
             {
                 return NotFound();
             }
@@ -108,7 +117,7 @@ namespace GenesisSchoolTask.Controllers
                 return NotFound();
             }
 
-            _BTCService.SendEmails(_configuration.GetSection("PathToFile").Value, _configuration.GetSection("ConnectionString").Value, currency);
+            _BTCService.SendEmails(currency, currencyName);
 
             return Ok();
         }
