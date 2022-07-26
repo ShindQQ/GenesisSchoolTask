@@ -1,5 +1,7 @@
 # GenesisSchoolTask
+
 SE School Case Task
+
 Task was in creating API with swagger documentation and dockerfile to work with Docker
 
 API had to:
